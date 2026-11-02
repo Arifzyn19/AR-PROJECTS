@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, Mail, Sparkles } from 'lucide-react';
+import { ArrowUp, Mail, Sparkles, Volume2, VolumeX } from 'lucide-react';
 import { GithubIcon, LinkedinIcon, TwitterIcon } from './SocialIcons';
 import { SITE_METADATA } from '../lib/constants';
+import { ambientSoundscape } from '../features/audio/ambientSoundscape';
 
 interface FooterProps {
   onReplayIntro?: () => void;
@@ -9,6 +10,14 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onReplayIntro }) => {
   const [currentTime, setCurrentTime] = useState<string>('');
+  const [isMuted, setIsMuted] = useState(ambientSoundscape.getIsMuted());
+
+  useEffect(() => {
+    const unsubscribe = ambientSoundscape.subscribe((muted) => {
+      setIsMuted(muted);
+    });
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     const updateTime = () => {
@@ -34,7 +43,7 @@ export const Footer: React.FC<FooterProps> = ({ onReplayIntro }) => {
   };
 
   return (
-    <footer className="bg-[#101112] border-t border-[#292C2D] pt-14 pb-10 text-[#929795] text-xs font-mono">
+    <footer className="bg-[#101112] border-t border-[#292C2D] pt-14 pb-24 md:pb-12 text-[#929795] text-xs font-mono">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 md:px-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 pb-14 border-b border-[#292C2D]/60">
           {/* Col 1: Wordmark & Bio */}
@@ -149,7 +158,38 @@ export const Footer: React.FC<FooterProps> = ({ onReplayIntro }) => {
             <span>Built with Three.js & Tailwind</span>
           </div>
 
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-5">
+            {/* Ambient Soundscape Mute Toggle */}
+            <button
+              onClick={() => ambientSoundscape.toggleMute()}
+              className={`inline-flex items-center gap-2 px-2.5 py-1 bg-[#191B1C] border transition-colors cursor-pointer select-none ${
+                isMuted
+                  ? 'border-[#292C2D] text-[#929795] hover:text-[#E8E9E5]'
+                  : 'border-[#B8F36B]/40 text-[#E8E9E5] hover:border-[#B8F36B]'
+              }`}
+              title={
+                isMuted
+                  ? 'Unmute low-frequency ambient soundscape'
+                  : 'Mute ambient soundscape'
+              }
+              aria-label={
+                isMuted ? 'Unmute ambient soundscape' : 'Mute ambient soundscape'
+              }
+            >
+              {isMuted ? (
+                <VolumeX className="w-3.5 h-3.5 text-[#929795]" />
+              ) : (
+                <div className="flex items-end gap-0.5 h-3 w-3">
+                  <span className="w-0.5 h-1.5 bg-[#B8F36B] animate-pulse" />
+                  <span className="w-0.5 h-3 bg-[#B8F36B] animate-pulse [animation-delay:150ms]" />
+                  <span className="w-0.5 h-2 bg-[#B8F36B] animate-pulse [animation-delay:300ms]" />
+                </div>
+              )}
+              <span className="text-[10px] tracking-wider uppercase font-mono">
+                {isMuted ? 'Sound: Muted' : 'Sound: Ambient'}
+              </span>
+            </button>
+
             {onReplayIntro && (
               <button
                 onClick={onReplayIntro}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Menu, Sparkles, X } from 'lucide-react';
+import { ArrowUpRight, Sparkles } from 'lucide-react';
 import { SITE_METADATA } from '../lib/constants';
 
 interface NavbarProps {
@@ -14,7 +14,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onReplayIntro,
 }) => {
   const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,64 +91,29 @@ export const Navbar: React.FC<NavbarProps> = ({
           </a>
         </div>
 
-        {/* Mobile menu trigger */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 text-[#929795] hover:text-[#E8E9E5] transition-colors"
-          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
-
-      {/* Mobile drop menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-[#191B1C] border-b border-[#292C2D] px-5 py-5 animate-in fade-in slide-in-from-top-4 duration-200 shadow-xl">
-          <nav className="flex flex-col gap-3 text-xs font-mono tracking-wider uppercase text-[#929795]">
-            {navLinks.map((link) => {
-              const isActive = activeSection === link.id;
-              return (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`py-2.5 border-b border-[#292C2D]/50 flex items-center justify-between transition-colors ${
-                    isActive ? 'text-[#B8F36B] font-semibold' : 'hover:text-[#E8E9E5]'
-                  }`}
-                >
-                  <span>{link.label}</span>
-                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#B8F36B]" />}
-                </a>
-              );
-            })}
-
-            {onReplayIntro && (
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onReplayIntro();
-                }}
-                className="py-2.5 border-b border-[#292C2D]/50 flex items-center justify-between text-[#929795] hover:text-[#B8F36B] transition-colors text-left cursor-pointer"
-              >
-                <span>Replay 3D Intro</span>
-                <Sparkles className="w-3.5 h-3.5 text-[#B8F36B]" />
-              </button>
-            )}
-
-            <a
-              href="#contact"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onContactClick?.();
-              }}
-              className="mt-3 inline-flex items-center justify-between px-4 py-3 text-xs font-mono uppercase tracking-wider text-[#101112] bg-[#B8F36B] font-semibold"
+        {/* Mobile top bar actions (replaces hamburger button) */}
+        <div className="flex md:hidden items-center gap-2">
+          {onReplayIntro && (
+            <button
+              onClick={onReplayIntro}
+              className="p-1.5 text-[#929795] hover:text-[#B8F36B] transition-colors"
+              title="Replay 3D Intro"
+              aria-label="Replay 3D Intro"
             >
-              <span>Initiate Inquiry</span>
-              <ArrowUpRight className="w-4 h-4" />
-            </a>
-          </nav>
+              <Sparkles className="w-4 h-4 text-[#B8F36B]" />
+            </button>
+          )}
+
+          <a
+            href="#contact"
+            onClick={onContactClick}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-[#101112] bg-[#B8F36B] hover:bg-[#c9f688] font-medium transition-colors"
+          >
+            <span>Inquire</span>
+            <ArrowUpRight className="w-3 h-3" />
+          </a>
         </div>
-      )}
+      </div>
     </header>
   );
 };

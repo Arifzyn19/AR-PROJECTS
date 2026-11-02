@@ -64,12 +64,6 @@ export const SculptureCanvas: React.FC<SculptureCanvasProps> = ({
       onTouchEnd={() => setIsInteracting(false)}
       aria-label="Interactive 3D Architectural Sculpture"
       role="img"
-    >
-      {/* Architectural status and orientation indicators */}
-      <div className="absolute top-28 right-4 sm:right-8 z-10 pointer-events-none hidden md:flex items-center gap-2 text-[10px] font-mono tracking-widest text-[#929795] uppercase opacity-60">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#B8F36B] inline-block shrink-0" />
-        <span>3D Orbital Geometry · Interactive Parallax</span>
-      </div>
-    </div>
+    />
   );
 };

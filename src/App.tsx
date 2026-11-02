@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { Footer } from './components/Footer';
 import { HeroSection } from './sections/HeroSection';
 import { WorkSection } from './sections/WorkSection';
@@ -8,6 +9,7 @@ import { ContactSection } from './sections/ContactSection';
 import { ProjectModal } from './components/ProjectModal';
 import { CinematicIntroOverlay } from './features/intro/CinematicIntroOverlay';
 import { SculptureCanvasHandle } from './features/sculpture/SculptureCanvas';
+import { ambientSoundscape } from './features/audio/ambientSoundscape';
 import { Project } from './types';
 
 const INTRO_SESSION_KEY = 'arifzyn_orbital_intro_seen';
@@ -31,11 +33,19 @@ export const App: React.FC = () => {
   const [introProgress, setIntroProgress] = useState<number>(0);
   const sculptureHandleRef = useRef<SculptureCanvasHandle | null>(null);
 
+  // If intro is already inactive on mount (returning visitor), start ambient soundscape
+  useEffect(() => {
+    if (!isIntroActive) {
+      ambientSoundscape.start();
+    }
+  }, [isIntroActive]);
+
   // Skip Intro Handler
   const handleSkipIntro = useCallback(() => {
     sculptureHandleRef.current?.skipIntro();
     setIsIntroActive(false);
     setIntroProgress(1.0);
+    ambientSoundscape.start();
     try {
       sessionStorage.setItem(INTRO_SESSION_KEY, 'true');
     } catch {}
@@ -53,6 +63,7 @@ export const App: React.FC = () => {
         () => {
           setIsIntroActive(false);
           setIntroProgress(1.0);
+          ambientSoundscape.start();
           try {
             sessionStorage.setItem(INTRO_SESSION_KEY, 'true');
           } catch {}
@@ -72,6 +83,7 @@ export const App: React.FC = () => {
           () => {
             setIsIntroActive(false);
             setIntroProgress(1.0);
+            ambientSoundscape.start();
             try {
               sessionStorage.setItem(INTRO_SESSION_KEY, 'true');
             } catch {}
@@ -187,6 +199,12 @@ export const App: React.FC = () => {
 
       {/* Footer with Replay Intro Option */}
       <Footer onReplayIntro={handleReplayIntro} />
+
+      {/* Fixed Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        activeSection={activeSection}
+        onContactClick={scrollToContact}
+      />
     </div>
   );
 };

@@ -53,6 +53,11 @@ export class ArchitecturalSculptureScene {
   private isDisposed = false;
   private isSoftwareGl = false;
 
+  // Drag-to-rotate interaction state
+  private isDragging = false;
+  private prevDragPointer = { x: 0, y: 0 };
+  private dragRotation = { x: 0, y: 0, targetX: 0, targetY: 0 };
+
   constructor(container: HTMLElement) {
     this.container = container;
 
@@ -333,11 +338,45 @@ export class ArchitecturalSculptureScene {
   }
 
   private bindEvents() {
+    const onMouseDown = (e: MouseEvent) => {
+      if ((e.target as HTMLElement)?.closest('a, button, input')) return;
+      this.isDragging = true;
+      this.prevDragPointer.x = e.clientX;
+      this.prevDragPointer.y = e.clientY;
+    };
+
+    const onMouseUp = () => {
+      this.isDragging = false;
+    };
+
     const onPointerMove = (e: MouseEvent) => {
       const halfW = window.innerWidth / 2;
       const halfH = window.innerHeight / 2;
       this.pointer.targetX = (e.clientX - halfW) / halfW;
       this.pointer.targetY = (e.clientY - halfH) / halfH;
+
+      if (this.isDragging) {
+        const dx = e.clientX - this.prevDragPointer.x;
+        const dy = e.clientY - this.prevDragPointer.y;
+        this.dragRotation.targetY += dx * 0.0075;
+        this.dragRotation.targetX += dy * 0.0075;
+        this.prevDragPointer.x = e.clientX;
+        this.prevDragPointer.y = e.clientY;
+      }
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        if ((e.target as HTMLElement)?.closest('a, button, input')) return;
+        this.isDragging = true;
+        this.prevDragPointer.x = touch.clientX;
+        this.prevDragPointer.y = touch.clientY;
+      }
+    };
+
+    const onTouchEnd = () => {
+      this.isDragging = false;
     };
 
     const onTouchMove = (e: TouchEvent) => {
@@ -347,6 +386,15 @@ export class ArchitecturalSculptureScene {
         const halfH = window.innerHeight / 2;
         this.pointer.targetX = (touch.clientX - halfW) / halfW;
         this.pointer.targetY = (touch.clientY - halfH) / halfH;
+
+        if (this.isDragging) {
+          const dx = touch.clientX - this.prevDragPointer.x;
+          const dy = touch.clientY - this.prevDragPointer.y;
+          this.dragRotation.targetY += dx * 0.0075;
+          this.dragRotation.targetX += dy * 0.0075;
+          this.prevDragPointer.x = touch.clientX;
+          this.prevDragPointer.y = touch.clientY;
+        }
       }
     };
 
@@ -355,15 +403,23 @@ export class ArchitecturalSculptureScene {
       this.targetScrollProgress = Math.min(1, Math.max(0, window.scrollY / maxScroll));
     };
 
+    this.container.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mouseup', onMouseUp);
     window.addEventListener('mousemove', onPointerMove, { passive: true });
+    this.container.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', this.handleResize, { passive: true });
 
     // Store unbind callbacks for dispose
     (this as any)._unbind = () => {
+      this.container.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('mousemove', onPointerMove);
+      this.container.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', this.handleResize);
     };
@@ -572,6 +628,11 @@ export class ArchitecturalSculptureScene {
     const scrollDamp = 1 - Math.exp(-3.5 * dt);
     this.scrollProgress += (this.targetScrollProgress - this.scrollProgress) * scrollDamp;
 
+    // Smooth damping for drag-to-rotate interaction
+    const dragDamp = 1 - Math.exp(-6.5 * dt);
+    this.dragRotation.x += (this.dragRotation.targetX - this.dragRotation.x) * dragDamp;
+    this.dragRotation.y += (this.dragRotation.targetY - this.dragRotation.y) * dragDamp;
+
     // 2. Slow idle kinetic rotation across multiple structural axes
     const idleSpeed = 0.4;
     if (!this.isIntroActive) {
@@ -584,10 +645,10 @@ export class ArchitecturalSculptureScene {
       this.innerGyro.rotation.x = -elapsedTime * idleSpeed * 0.6;
       this.innerGyro.rotation.y = Math.sin(elapsedTime * 0.3) * 0.25;
 
-      // Pointer-driven and scroll-driven sculpture orientation
-      const targetRotY = this.pointer.x * 0.55 + this.scrollProgress * Math.PI * 1.5;
-      const targetRotX = this.pointer.y * 0.4 + Math.sin(this.scrollProgress * Math.PI) * 0.3;
-      const targetRotZ = -this.pointer.x * 0.15;
+      // Pointer-driven, drag-driven, and scroll-driven sculpture orientation
+      const targetRotY = this.pointer.x * 0.45 + this.dragRotation.y + this.scrollProgress * Math.PI * 1.5;
+      const targetRotX = this.pointer.y * 0.35 + this.dragRotation.x + Math.sin(this.scrollProgress * Math.PI) * 0.3;
+      const targetRotZ = -this.pointer.x * 0.12;
 
       this.sculptureGroup.rotation.y += (targetRotY - this.sculptureGroup.rotation.y) * dampRate;
       this.sculptureGroup.rotation.x += (targetRotX - this.sculptureGroup.rotation.x) * dampRate;
